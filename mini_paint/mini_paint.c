@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <math.h>
 
 //size of the board
 int X;
@@ -8,15 +9,15 @@ int Y;
 //the drawing
 char **drawing;
 
-typedef struct srect
+typedef struct scircle
 {
 	//point coordinates
 	float px, py;
-	//size of rectangle
-	float xsize, ysize;
+	//radius of the circle
+	float radius;
 	//type of rectangle and the char to draw it
 	char type, fill;
-} rect;
+} circle;
 
 //print a string
 void print(char *s)
@@ -28,49 +29,54 @@ void print(char *s)
 	write(1, s, i);
 }
 
-void paintpixel(int x, int y, rect r)
+void paintpixel(int x, int y, circle c)
 {
-	//check if point xy is in the rectangle
-	if (x >= r.px && x <= r.px + r.xsize && y >= r.py && y <= r.py + r.ysize)
+	//check if point xy is in the circle
+	float dist;
+
+	//Pythagoras theorem to find distance between point and circle's center
+	dist = sqrtf((x - c.px) * (x - c.px) + (y - c.py) * (y - c.py));
+
+	if (dist <= c.radius)
 	{
-		if (r.type == 'R')
-			drawing[y][x] = r.fill;
+		if (c.type == 'C')
+			drawing[y][x] = c.fill;
 		else
 		{
-			//check if point is on the border
-			//(control if there is a further away point that belongs to the rectangle)
-			if (!(x - 1 >= r.px && x + 1 <= r.px + r.xsize && y - 1 >= r.py && y + 1 <= r.py + r.ysize))
-				drawing[y][x] = r.fill;
+			//check if point is on the circumference
+			//(control if there is a further away point that belongs to the circle)
+			if (dist + 1 > c.radius)
+				drawing[y][x] = c.fill;
 		}
 	}
 }
 
-int checkrect(FILE *file)
+int checkcircle(FILE *file)
 {
 
-	rect r;
+	circle c;
 	int res;
 	int x, y = 0;
 
-	res = fscanf(file, "\n%c %f %f %f %f %c", &r.type, &r.px, &r.py, &r.xsize, &r.ysize, &r.fill);
+	res = fscanf(file, "\n%c %f %f %f %c", &c.type, &c.px, &c.py, &c.radius, &c.fill);
 
 	//res = -1 means file is over
 	if (res == -1)
 		return (0);
 
-	//rectangle is wrong
-	if (res < 6 || r.xsize <= 0 || r.ysize <= 0 || (r.type != 'r' && r.type != 'R'))
+	//circle is wrong
+	if (res < 5 || c.radius <= 0 || (c.type != 'c' && c.type != 'C'))
 	{
 		return (1);
 	}
 
-	//draw the rectangle inside drawing
+	//draw the circle inside drawing
 	while (y < Y)
 	{
 		x = 0;
 		while (x < X)
 		{
-			paintpixel(x, y, r);
+			paintpixel(x, y, c);
 			x++;
 		}
 		y++;
@@ -148,8 +154,8 @@ int checkfile(FILE *file)
 	//setup the background
 	createbg(bg);
 
-	//start reading rectangles, stop if error is found
-	while ((ret = checkrect(file)))
+	//start reading circles, stop if error is found
+	while ((ret = checkcircle(file)))
 		if (ret == 1)
 		{
 			//ret = 1 means an error is found
