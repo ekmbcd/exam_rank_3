@@ -63,7 +63,7 @@ int checkrect(FILE *file)
 		return (1);
 	}
 
-	//put the rectangle inside drawing
+	//draw the rectangle inside drawing
 	while (y < Y)
 	{
 		x = 0;
@@ -74,7 +74,7 @@ int checkrect(FILE *file)
 		}
 		y++;
 	}
-	//all went well, read the next line
+	//all went well, read the next line (return something other than 1)
 	return (42);
 }
 
@@ -151,6 +151,7 @@ int checkfile(FILE *file)
 	while ((ret = checkrect(file)))
 		if (ret == 1)
 		{
+			//ret = 1 means an error is found
 			freedrawing();
 			return (1);
 		}
@@ -171,7 +172,7 @@ int main(int ac, char **av)
 	{
 		file = fopen(av[1], "r");
 
-		//check returns 0 if all went well
+		//checkfile returns 0 if all went well
 		if (file && !checkfile(file))
 		{
 			//remember to fclose
